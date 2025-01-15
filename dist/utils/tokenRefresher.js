@@ -17,32 +17,25 @@ function refreshAccessToken(refreshToken_1, config_1) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
+                    'Accept': 'application/json',
                 },
+                mode: 'cors',
                 body: new URLSearchParams({
+                    grant_type: 'refresh_token',
                     client_id: config.clientId,
                     client_secret: config.clientSecret,
-                    grant_type: 'refresh_token',
                     refresh_token: refreshToken,
                 }),
             });
             if (!response.ok) {
-                throw new Error('Failed to refresh token');
+                return { success: false };
             }
             const tokens = yield response.json();
-            return {
-                success: true,
-                tokens: {
-                    access_token: tokens.access_token,
-                    refresh_token: tokens.refresh_token,
-                    id_token: tokens.id_token,
-                },
-            };
+            return { success: true, tokens };
         }
         catch (error) {
-            return {
-                success: false,
-                error: error instanceof Error ? error.message : 'Unknown error occurred',
-            };
+            console.error('Error refreshing token:', error);
+            return { success: false };
         }
     });
 }

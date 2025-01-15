@@ -1,6 +1,6 @@
 {
-  "name": "@julio/next-keycloak",
-  "version": "0.1.0",
+  "name": "next-keycloak-auth",
+  "version": "0.1.2",
   "description": "A Next.js library for Keycloak authentication",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,8 +1,9 @@
-import { KeycloakConfig } from './types';
+import { KeycloakConfig } from "./types";
 export declare class KeycloakNext {
     private config;
     private storage;
     constructor(config: KeycloakConfig);
+    private fetchWithCORS;
     signIn(redirectUri?: string): Promise<void>;
     handleCallback(code: string): Promise<{
         access_token: string;

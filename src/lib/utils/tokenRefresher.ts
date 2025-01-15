@@ -1,4 +1,4 @@
-import { KeycloakConfig } from '../types';
+import { KeycloakConfig, TokenResponse } from '../types';
 
 export async function refreshAccessToken(
   refreshToken: string,
@@ -6,12 +6,7 @@ export async function refreshAccessToken(
   attempt: number = 1
 ): Promise<{
   success: boolean;
-  tokens?: {
-    access_token: string;
-    refresh_token: string;
-    id_token: string;
-  };
-  error?: string;
+  tokens?: TokenResponse;
 }> {
   try {
     const response = await fetch(
@@ -20,34 +15,26 @@ export async function refreshAccessToken(
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
         },
+        mode: 'cors',
         body: new URLSearchParams({
+          grant_type: 'refresh_token',
           client_id: config.clientId,
           client_secret: config.clientSecret,
-          grant_type: 'refresh_token',
           refresh_token: refreshToken,
         }),
       }
     );
 
     if (!response.ok) {
-      throw new Error('Failed to refresh token');
+      return { success: false };
     }
 
     const tokens = await response.json();
-
-    return {
-      success: true,
-      tokens: {
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        id_token: tokens.id_token,
-      },
-    };
+    return { success: true, tokens };
   } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-    };
+    console.error('Error refreshing token:', error);
+    return { success: false };
   }
 }
