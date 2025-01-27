@@ -16,14 +16,22 @@ const tokenUtils_1 = require("./utils/tokenUtils");
 class KeycloakNext {
     constructor(config) {
         this.storage = null;
+        this.encryptionConfig = {
+            encryptionKey: process.env[KeycloakNext.ENCRYPTION_KEY] ||
+                "f47ac10b58cc4372a5670e02b2c3d479",
+            iv: process.env[KeycloakNext.ENCRYPTION_IV] || "1e72d836a2f1d4b8",
+        };
         this.config = config;
         if (typeof window !== "undefined") {
             this.storage = window.localStorage;
         }
     }
+    setEncryptionConfig(encryptionKey, iv) {
+        this.encryptionConfig = { encryptionKey, iv };
+    }
     fetchWithCORS(url, options) {
         return __awaiter(this, void 0, void 0, function* () {
-            const response = yield fetch(url, Object.assign(Object.assign({}, options), { headers: Object.assign(Object.assign({}, options.headers), { "Accept": "application/json" }), mode: "cors" }));
+            const response = yield fetch(url, Object.assign(Object.assign({}, options), { headers: Object.assign(Object.assign({}, options.headers), { Accept: "application/json" }), mode: "cors" }));
             return response;
         });
     }
@@ -63,9 +71,9 @@ class KeycloakNext {
             }
             const tokens = yield response.json();
             if (this.storage) {
-                this.storage.setItem("kc_access_token", (0, encryption_1.encrypt)(tokens.access_token));
-                this.storage.setItem("kc_refresh_token", (0, encryption_1.encrypt)(tokens.refresh_token));
-                this.storage.setItem("kc_id_token", (0, encryption_1.encrypt)(tokens.id_token));
+                this.storage.setItem("kc_access_token", (0, encryption_1.encrypt)(tokens.access_token, this.encryptionConfig));
+                this.storage.setItem("kc_refresh_token", (0, encryption_1.encrypt)(tokens.refresh_token, this.encryptionConfig));
+                this.storage.setItem("kc_id_token", (0, encryption_1.encrypt)(tokens.id_token, this.encryptionConfig));
             }
             return tokens;
         });
@@ -92,7 +100,9 @@ class KeycloakNext {
             if (!this.storage)
                 return null;
             const encryptedToken = this.storage.getItem("kc_access_token");
-            return encryptedToken ? (0, encryption_1.decrypt)(encryptedToken) : null;
+            return encryptedToken
+                ? (0, encryption_1.decrypt)(encryptedToken, this.encryptionConfig)
+                : null;
         });
     }
     getIdToken() {
@@ -100,7 +110,9 @@ class KeycloakNext {
             if (!this.storage)
                 return null;
             const encryptedToken = this.storage.getItem("kc_id_token");
-            return encryptedToken ? (0, encryption_1.decrypt)(encryptedToken) : null;
+            return encryptedToken
+                ? (0, encryption_1.decrypt)(encryptedToken, this.encryptionConfig)
+                : null;
         });
     }
     getRefreshToken() {
@@ -108,7 +120,9 @@ class KeycloakNext {
             if (!this.storage)
                 return null;
             const encryptedToken = this.storage.getItem("kc_refresh_token");
-            return encryptedToken ? (0, encryption_1.decrypt)(encryptedToken) : null;
+            return encryptedToken
+                ? (0, encryption_1.decrypt)(encryptedToken, this.encryptionConfig)
+                : null;
         });
     }
     getUserRoles() {
@@ -131,9 +145,9 @@ class KeycloakNext {
                 if (!result.success || !result.tokens)
                     return false;
                 if (this.storage) {
-                    this.storage.setItem("kc_access_token", (0, encryption_1.encrypt)(result.tokens.access_token));
-                    this.storage.setItem("kc_refresh_token", (0, encryption_1.encrypt)(result.tokens.refresh_token));
-                    this.storage.setItem("kc_id_token", (0, encryption_1.encrypt)(result.tokens.id_token));
+                    this.storage.setItem("kc_access_token", (0, encryption_1.encrypt)(result.tokens.access_token, this.encryptionConfig));
+                    this.storage.setItem("kc_refresh_token", (0, encryption_1.encrypt)(result.tokens.refresh_token, this.encryptionConfig));
+                    this.storage.setItem("kc_id_token", (0, encryption_1.encrypt)(result.tokens.id_token, this.encryptionConfig));
                 }
                 return true;
             }
@@ -162,3 +176,5 @@ class KeycloakNext {
     }
 }
 exports.KeycloakNext = KeycloakNext;
+KeycloakNext.ENCRYPTION_KEY = "f47ac10b58cc4372a5670e02b2c3d479";
+KeycloakNext.ENCRYPTION_IV = "1e72d836a2f1d4b8";

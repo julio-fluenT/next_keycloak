@@ -2,7 +2,11 @@ import { KeycloakConfig } from "./types";
 export declare class KeycloakNext {
     private config;
     private storage;
+    private static readonly ENCRYPTION_KEY;
+    private static readonly ENCRYPTION_IV;
+    private encryptionConfig;
     constructor(config: KeycloakConfig);
+    setEncryptionConfig(encryptionKey: string, iv: string): void;
     private fetchWithCORS;
     signIn(redirectUri?: string): Promise<void>;
     handleCallback(code: string): Promise<{

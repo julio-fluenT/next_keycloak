@@ -3,9 +3,28 @@ import { refreshAccessToken } from "./utils/tokenRefresher";
 import { encrypt, decrypt } from "./utils/encryption";
 import { getDecodedAccessToken } from "./utils/tokenUtils";
 
+/**
+ * Configuration for encryption and decryption operations.
+ */
+interface EncryptionConfig {
+  /** The encryption key used for AES-256-CBC algorithm. Must be 32 characters long. */
+  encryptionKey: string;
+  /** The initialization vector (IV) for the encryption. Must be 16 characters long. */
+  iv: string;
+}
 export class KeycloakNext {
   private config: KeycloakConfig;
   private storage: Storage | null = null;
+
+  private static readonly ENCRYPTION_KEY = "f47ac10b58cc4372a5670e02b2c3d479";
+  private static readonly ENCRYPTION_IV = "1e72d836a2f1d4b8";
+
+  private encryptionConfig: EncryptionConfig = {
+    encryptionKey:
+      process.env[KeycloakNext.ENCRYPTION_KEY] ||
+      "f47ac10b58cc4372a5670e02b2c3d479",
+    iv: process.env[KeycloakNext.ENCRYPTION_IV] || "1e72d836a2f1d4b8",
+  };
 
   constructor(config: KeycloakConfig) {
     this.config = config;
@@ -14,12 +33,16 @@ export class KeycloakNext {
     }
   }
 
+  setEncryptionConfig(encryptionKey: string, iv: string) {
+    this.encryptionConfig = { encryptionKey, iv };
+  }
+
   private async fetchWithCORS(url: string, options: RequestInit) {
     const response = await fetch(url, {
       ...options,
       headers: {
         ...options.headers,
-        "Accept": "application/json",
+        Accept: "application/json",
       },
       mode: "cors",
     });
@@ -74,9 +97,18 @@ export class KeycloakNext {
     const tokens = await response.json();
 
     if (this.storage) {
-      this.storage.setItem("kc_access_token", encrypt(tokens.access_token));
-      this.storage.setItem("kc_refresh_token", encrypt(tokens.refresh_token));
-      this.storage.setItem("kc_id_token", encrypt(tokens.id_token));
+      this.storage.setItem(
+        "kc_access_token",
+        encrypt(tokens.access_token, this.encryptionConfig)
+      );
+      this.storage.setItem(
+        "kc_refresh_token",
+        encrypt(tokens.refresh_token, this.encryptionConfig)
+      );
+      this.storage.setItem(
+        "kc_id_token",
+        encrypt(tokens.id_token, this.encryptionConfig)
+      );
     }
 
     return tokens;
@@ -105,19 +137,25 @@ export class KeycloakNext {
   async getAccessToken(): Promise<string | null> {
     if (!this.storage) return null;
     const encryptedToken = this.storage.getItem("kc_access_token");
-    return encryptedToken ? decrypt(encryptedToken) : null;
+    return encryptedToken
+      ? decrypt(encryptedToken, this.encryptionConfig)
+      : null;
   }
 
   async getIdToken(): Promise<string | null> {
     if (!this.storage) return null;
     const encryptedToken = this.storage.getItem("kc_id_token");
-    return encryptedToken ? decrypt(encryptedToken) : null;
+    return encryptedToken
+      ? decrypt(encryptedToken, this.encryptionConfig)
+      : null;
   }
 
   async getRefreshToken(): Promise<string | null> {
     if (!this.storage) return null;
     const encryptedToken = this.storage.getItem("kc_refresh_token");
-    return encryptedToken ? decrypt(encryptedToken) : null;
+    return encryptedToken
+      ? decrypt(encryptedToken, this.encryptionConfig)
+      : null;
   }
 
   async getUserRoles(): Promise<string[]> {
@@ -139,13 +177,16 @@ export class KeycloakNext {
       if (this.storage) {
         this.storage.setItem(
           "kc_access_token",
-          encrypt(result.tokens.access_token)
+          encrypt(result.tokens.access_token, this.encryptionConfig)
         );
         this.storage.setItem(
           "kc_refresh_token",
-          encrypt(result.tokens.refresh_token)
+          encrypt(result.tokens.refresh_token, this.encryptionConfig)
         );
-        this.storage.setItem("kc_id_token", encrypt(result.tokens.id_token));
+        this.storage.setItem(
+          "kc_id_token",
+          encrypt(result.tokens.id_token, this.encryptionConfig)
+        );
       }
 
       return true;

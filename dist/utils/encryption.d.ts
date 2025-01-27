@@ -1,2 +1,8 @@
-export declare function encrypt(text: string, key?: string): string;
-export declare function decrypt(encryptedString: string, key?: string): string;
+export declare function encrypt(text: string, encryptionConfig: {
+    encryptionKey: string;
+    iv: string;
+}): string;
+export declare function decrypt(encryptedString: string, encryptionConfig: {
+    encryptionKey: string;
+    iv: string;
+}): string;
