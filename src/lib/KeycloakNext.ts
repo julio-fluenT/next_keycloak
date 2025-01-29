@@ -134,12 +134,16 @@ export class KeycloakNext {
     window.location.href = url;
   }
 
-  async getAccessToken(): Promise<string | null> {
+  private async getDecryptedAccessToken(): Promise<string | null> {
     if (!this.storage) return null;
     const encryptedToken = this.storage.getItem("kc_access_token");
     return encryptedToken
       ? decrypt(encryptedToken, this.encryptionConfig)
       : null;
+  }
+  getAccessToken(): string | null {
+    if (!this.storage) return null;
+    return this.storage.getItem("kc_access_token");
   }
 
   async getIdToken(): Promise<string | null> {
@@ -159,7 +163,7 @@ export class KeycloakNext {
   }
 
   async getUserRoles(): Promise<string[]> {
-    const token = await this.getAccessToken();
+    const token = await this.getDecryptedAccessToken();
     if (!token) return [];
 
     const decoded = await getDecodedAccessToken(token);
@@ -196,7 +200,7 @@ export class KeycloakNext {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    const token = await this.getAccessToken();
+    const token = await this.getDecryptedAccessToken();
     if (!token) return false;
 
     const decoded = await getDecodedAccessToken(token);

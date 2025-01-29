@@ -95,7 +95,7 @@ class KeycloakNext {
             window.location.href = url;
         });
     }
-    getAccessToken() {
+    getDecryptedAccessToken() {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.storage)
                 return null;
@@ -104,6 +104,11 @@ class KeycloakNext {
                 ? (0, encryption_1.decrypt)(encryptedToken, this.encryptionConfig)
                 : null;
         });
+    }
+    getAccessToken() {
+        if (!this.storage)
+            return null;
+        return this.storage.getItem("kc_access_token");
     }
     getIdToken() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -128,7 +133,7 @@ class KeycloakNext {
     getUserRoles() {
         return __awaiter(this, void 0, void 0, function* () {
             var _a;
-            const token = yield this.getAccessToken();
+            const token = yield this.getDecryptedAccessToken();
             if (!token)
                 return [];
             const decoded = yield (0, tokenUtils_1.getDecodedAccessToken)(token);
@@ -158,7 +163,7 @@ class KeycloakNext {
     }
     isAuthenticated() {
         return __awaiter(this, void 0, void 0, function* () {
-            const token = yield this.getAccessToken();
+            const token = yield this.getDecryptedAccessToken();
             if (!token)
                 return false;
             const decoded = yield (0, tokenUtils_1.getDecodedAccessToken)(token);
