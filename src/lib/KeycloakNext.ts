@@ -134,32 +134,66 @@ export class KeycloakNext {
     window.location.href = url;
   }
 
-  private async getDecryptedAccessToken(): Promise<string | null> {
+  private async getRawDecryptedToken(tokenKey: string): Promise<string | null> {
     if (!this.storage) return null;
-    const encryptedToken = this.storage.getItem("kc_access_token");
+    const encryptedToken = this.storage.getItem(tokenKey);
     return encryptedToken
       ? decrypt(encryptedToken, this.encryptionConfig)
       : null;
   }
+
+  private async isTokenExpired(): Promise<boolean> {
+    try {
+      const token = await this.getRawDecryptedToken("kc_access_token");
+      if (!token) return true;
+
+      const decoded = await getDecodedAccessToken(token);
+      if (!decoded || !decoded.exp) return true;
+
+      // Add a 30-second buffer to ensure we refresh before actual expiration
+      const expirationTime = decoded.exp * 1000 - 30000;
+      return Date.now() >= expirationTime;
+    } catch (error) {
+      console.error("Error checking token expiration:", error);
+      return true;
+    }
+  }
+
+  private async getDecryptedAccessToken(): Promise<string | null> {
+    if (!this.storage) return null;
+
+    try {
+      const token = await this.getRawDecryptedToken("kc_access_token");
+      if (!token) return null;
+
+      // Check if token is expired and try to refresh if needed
+      const isExpired = await this.isTokenExpired();
+      if (isExpired) {
+        const refreshed = await this.refreshToken();
+        if (refreshed) {
+          return await this.getRawDecryptedToken("kc_access_token");
+        }
+        return null;
+      }
+
+      return token;
+    } catch (error) {
+      console.error("Error getting decrypted access token:", error);
+      return null;
+    }
+  }
+
   getAccessToken(): string | null {
     if (!this.storage) return null;
     return this.storage.getItem("kc_access_token");
   }
 
   async getIdToken(): Promise<string | null> {
-    if (!this.storage) return null;
-    const encryptedToken = this.storage.getItem("kc_id_token");
-    return encryptedToken
-      ? decrypt(encryptedToken, this.encryptionConfig)
-      : null;
+    return this.getRawDecryptedToken("kc_id_token");
   }
 
   async getRefreshToken(): Promise<string | null> {
-    if (!this.storage) return null;
-    const encryptedToken = this.storage.getItem("kc_refresh_token");
-    return encryptedToken
-      ? decrypt(encryptedToken, this.encryptionConfig)
-      : null;
+    return this.getRawDecryptedToken("kc_refresh_token");
   }
 
   async getUserRoles(): Promise<string[]> {
