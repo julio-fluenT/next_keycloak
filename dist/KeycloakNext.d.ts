@@ -15,6 +15,8 @@ export declare class KeycloakNext {
         id_token: string;
     }>;
     logout(redirectUri?: string): Promise<void>;
+    private getRawDecryptedToken;
+    private isTokenExpired;
     private getDecryptedAccessToken;
     getAccessToken(): string | null;
     getIdToken(): Promise<string | null>;
