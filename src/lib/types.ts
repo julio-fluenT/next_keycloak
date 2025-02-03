@@ -1,6 +1,6 @@
 export interface KeycloakConfig {
   clientId: string;
-  clientSecret: string;
+  clientSecret?: string;
   issuer: string;
   redirectUri: string;
   encryptionKey?: string;

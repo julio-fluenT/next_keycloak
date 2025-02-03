@@ -61,7 +61,7 @@ class KeycloakNext {
                 body: new URLSearchParams({
                     grant_type: "authorization_code",
                     client_id: this.config.clientId,
-                    client_secret: this.config.clientSecret,
+                    //client_secret: this.config.clientSecret,
                     code,
                     redirect_uri: this.config.redirectUri,
                 }),
@@ -116,6 +116,9 @@ class KeycloakNext {
                     return true;
                 // Add a 30-second buffer to ensure we refresh before actual expiration
                 const expirationTime = decoded.exp * 1000 - 30000;
+                console.log("Expiration time:", expirationTime);
+                console.log("Current time:", Date.now());
+                console.log("Is token expired?", Date.now() >= expirationTime);
                 return Date.now() >= expirationTime;
             }
             catch (error) {
@@ -133,9 +136,12 @@ class KeycloakNext {
                 if (!token)
                     return null;
                 // Check if token is expired and try to refresh if needed
+                console.log("Checking token expiration...");
                 const isExpired = yield this.isTokenExpired();
+                console.log("Token is expired:", isExpired);
                 if (isExpired) {
                     const refreshed = yield this.refreshToken();
+                    console.log("Refreshing token:", refreshed);
                     if (refreshed) {
                         return yield this.getRawDecryptedToken("kc_access_token");
                     }
@@ -177,8 +183,10 @@ class KeycloakNext {
     refreshToken() {
         return __awaiter(this, void 0, void 0, function* () {
             const refreshToken = yield this.getRefreshToken();
+            console.log("Refreshing token:", refreshToken);
             if (!refreshToken)
                 return false;
+            console.log("refresh token", (0, tokenUtils_1.getDecodedAccessToken)(refreshToken));
             try {
                 const result = yield (0, tokenRefresher_1.refreshAccessToken)(refreshToken, this.config);
                 if (!result.success || !result.tokens)
@@ -201,9 +209,13 @@ class KeycloakNext {
             if (!token)
                 return false;
             const decoded = yield (0, tokenUtils_1.getDecodedAccessToken)(token);
+            console.log("Decoded token:", decoded);
             if (!decoded)
                 return false;
             const now = Math.floor(Date.now() / 1000);
+            console.log("Now:", now);
+            console.log("Token expiration:", decoded.exp);
+            console.log("Is token expired?", decoded.exp > now);
             return decoded.exp > now;
         });
     }

@@ -1,4 +1,5 @@
-import { KeycloakConfig, TokenResponse } from '../types';
+import { KeycloakConfig, TokenResponse } from "../types";
+import { getDecodedAccessToken } from "./tokenUtils";
 
 export async function refreshAccessToken(
   refreshToken: string,
@@ -12,16 +13,16 @@ export async function refreshAccessToken(
     const response = await fetch(
       `${config.issuer}/protocol/openid-connect/token`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json',
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "application/json",
         },
-        mode: 'cors',
+        mode: "cors",
         body: new URLSearchParams({
-          grant_type: 'refresh_token',
+          grant_type: "refresh_token",
           client_id: config.clientId,
-          client_secret: config.clientSecret,
+          //client_secret: config.clientSecret,
           refresh_token: refreshToken,
         }),
       }
@@ -34,7 +35,7 @@ export async function refreshAccessToken(
     const tokens = await response.json();
     return { success: true, tokens };
   } catch (error) {
-    console.error('Error refreshing token:', error);
+    console.error("Error refreshing token:", error);
     return { success: false };
   }
 }

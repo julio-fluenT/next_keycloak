@@ -14,16 +14,16 @@ function refreshAccessToken(refreshToken_1, config_1) {
     return __awaiter(this, arguments, void 0, function* (refreshToken, config, attempt = 1) {
         try {
             const response = yield fetch(`${config.issuer}/protocol/openid-connect/token`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Accept': 'application/json',
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    Accept: "application/json",
                 },
-                mode: 'cors',
+                mode: "cors",
                 body: new URLSearchParams({
-                    grant_type: 'refresh_token',
+                    grant_type: "refresh_token",
                     client_id: config.clientId,
-                    client_secret: config.clientSecret,
+                    //client_secret: config.clientSecret,
                     refresh_token: refreshToken,
                 }),
             });
@@ -34,7 +34,7 @@ function refreshAccessToken(refreshToken_1, config_1) {
             return { success: true, tokens };
         }
         catch (error) {
-            console.error('Error refreshing token:', error);
+            console.error("Error refreshing token:", error);
             return { success: false };
         }
     });
